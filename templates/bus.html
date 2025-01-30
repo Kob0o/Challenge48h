@@ -1,159 +1,207 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEL Transport - Bus & V'Lille</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
-<body>
-    <!-- HEADER -->
-    <header class="bg-red-600 text-white p-4">
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-red-600 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">MEL Transport</h1>
             <nav>
                 <ul class="flex space-x-4">
                     <li><a href="/" class="hover:underline">Accueil</a></li>
-                    <li><a href="/bus" class="hover:underline">Bus & Tram</a></li>
+                    <li><a href="/bus" class="hover:underline font-semibold">Bus</a></li>
                     <li><a href="/velo" class="hover:underline">V'Lille</a></li>
                     <li><a href="/" class="hover:underline">Mon Profil</a></li>
-                    <li><a href="/" class="hover:underline">Connexion</a></li>
-                    <li><a href="/" class="hover:underline">Inscription</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <main class="container mx-auto p-4">
-      <h1 class="text-3xl font-bold underline mb-4">Passages de Bus & Tram</h1>
-  
-      <!-- Formulaire de filtres -->
-      <div class="bg-gray-100 p-4 rounded-lg mb-6">
-          <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <!-- Filtre par ligne -->
-              <div>
-                  <label class="block text-sm font-medium mb-1">Ligne :</label>
-                  <select name="ligne" class="w-full p-2 border rounded">
-                      <option value="">Toutes les lignes</option>
-                      {% for ligne in lignes_uniques %}
-                          <option value="{{ ligne }}" {% if request.args.get('ligne') == ligne %}selected{% endif %}>{{ ligne }}</option>
-                      {% endfor %}
-                  </select>
-              </div>
-  
-              <!-- Filtre par perturbation -->
-              <div>
-                  <label class="block text-sm font-medium mb-1">Perturbation :</label>
-                  <select name="perturbation" class="w-full p-2 border rounded">
-                      <option value="">Tous</option>
-                      <option value="oui" {% if request.args.get('perturbation') == 'oui' %}selected{% endif %}>Avec perturbation</option>
-                      <option value="non" {% if request.args.get('perturbation') == 'non' %}selected{% endif %}>Sans perturbation</option>
-                  </select>
-              </div>
-  
-              <!-- Filtre par heure -->
-              <div>
-                  <label class="block text-sm font-medium mb-1">Heure :</label>
-                  <select name="heure" class="w-full p-2 border rounded">
-                      <option value="">Toutes</option>
-                      <option value="1h" {% if request.args.get('heure') == '1h' %}selected{% endif %}>Dans l'heure</option>
-                      <option value="3h" {% if request.args.get('heure') == '3h' %}selected{% endif %}>Dans 3 heures</option>
-                      <option value="today" {% if request.args.get('heure') == 'today' %}selected{% endif %}>Aujourd'hui</option>
-                  </select>
-              </div>
-  
-              <!-- Bouton de soumission -->
-              <div class="self-end">
-                  <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Filtrer</button>
-              </div>
-          </form>
-      </div>
-  
-      <!-- Affichage des passages -->
-      <h2 class="text-xl font-bold">Prochains Passages</h2>
-      <table class="min-w-full bg-white mb-6 border-collapse">
-        <thead>
-            <tr>
-                <th class="px-4 py-2 border">Nom Station</th>
-                <th class="px-4 py-2 border">Ligne</th>
-                <th class="px-4 py-2 border">Sens Ligne</th>
-                <th class="px-4 py-2 border">Heure de passage</th>
-                <th class="px-4 py-2 border">Perturbation</th>
-                <th class="px-4 py-2 border">Description</th>
-                <th class="px-4 py-2 border">Fin prévue de la perturbation</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if passages %}
-                {% for passage in passages['records'] %}
-                    {% set ligne_code = passage['code_ligne'] %}
+        <!-- Section du tableau -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Passages de Bus</h1>
+
+        <!-- Filtres -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Filtre Ligne -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ligne</label>
+                    <select name="ligne" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-500">
+                        <option value="">Toutes les lignes</option>
+                        {% for ligne in lignes_uniques %}
+                            <option value="{{ ligne }}" {% if request_args.get('ligne') == ligne %}selected{% endif %}>{{ ligne }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filtre Perturbations -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Perturbations</label>
+                    <select name="perturbation" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-500">
+                        <option value="">Toutes</option>
+                        <option value="oui" {% if request_args.get('perturbation') == 'oui' %}selected{% endif %}>Avec perturbation</option>
+                        <option value="non" {% if request_args.get('perturbation') == 'non' %}selected{% endif %}>Sans perturbation</option>
+                    </select>
+                </div>
+
+                <!-- Filtre Heure -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Plage horaire</label>
+                    <select name="heure" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-red-500">
+                        <option value="">Toutes</option>
+                        <option value="1h" {% if request_args.get('heure') == '1h' %}selected{% endif %}>Dans 1h</option>
+                        <option value="3h" {% if request_args.get('heure') == '3h' %}selected{% endif %}>Dans 3h</option>
+                        <option value="today" {% if request_args.get('heure') == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                    </select>
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors w-full">
+                        Filtrer
+                    </button>
+                    <a href="{{ url_for('passages') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors whitespace-nowrap">
+                        Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Résultats -->
+        <div class="mb-4 text-sm text-gray-600">
+            Affichage des résultats {{ (current_page-1)*5 + 1 }} à {{ [current_page*5, total]|min }} sur {{ total }}
+        </div>
+
+        <!-- Tableau des passages -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td class="px-4 py-2 border">{{ passage['nom_station'] }}</td>
-                        <td class="px-4 py-2 border">{{ ligne_code }}</td>
-                        <td class="px-4 py-2 border">{{ passage['sens_ligne'] }}</td>
-                        <td class="px-4 py-2 border">{{ passage['heure_estimee_depart'][11:16] }}</td>
-                        
-                        {% if perturbations_par_ligne.get(ligne_code) %}
-                            {% set pert = perturbations_par_ligne[ligne_code][0] %}
-                            <td class="px-4 py-2 border">{{ pert['type_perturbation'] }}</td>
-                            <td class="px-4 py-2 border">{{ pert['message'] }}</td>
-                            <td class="px-4 py-2 border">{{ pert['heure_fin_prevue'][:10] }}</td>
-                        {% else %}
-                            <td class="px-4 py-2 border">-</td>
-                            <td class="px-4 py-2 border">-</td>
-                            <td class="px-4 py-2 border">-</td>
-                        {% endif %}
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Station</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ligne</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sens</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heure</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perturbation</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Détails</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fin prévue</th>
                     </tr>
-                {% endfor %}
-            {% else %}
-                <tr><td colspan="7" class="px-4 py-2 border">Aucune donnée disponible</td></tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for passage in passages.records %}
+                        {% set ligne_code = passage.code_ligne %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 text-sm text-gray-900">{{ passage.nom_station }}</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ ligne_code }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ passage.sens_ligne }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ passage.heure_estimee_depart[11:16] }}</td>
+                            {% if perturbations_par_ligne.get(ligne_code) %}
+                                {% set pert = perturbations_par_ligne[ligne_code][0] %}
+                                <td class="px-4 py-3 text-sm text-red-600 font-medium">{{ pert.type_perturbation }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ pert.message }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ pert.heure_fin_prevue[:10] }}</td>
+                            {% else %}
+                                <td class="px-4 py-3 text-sm text-gray-400">-</td>
+                                <td class="px-4 py-3 text-sm text-gray-400">-</td>
+                                <td class="px-4 py-3 text-sm text-gray-400">-</td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-4 py-6 text-center text-gray-500">Aucun passage trouvé</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-center gap-2 mt-6">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('passages', page=current_page-1, **request_args) }}" 
+                   class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+                   ← Précédent
+                </a>
             {% endif %}
-        </tbody>
-    </table>
-  
-      <!-- Résultats -->
-    <div class="mb-4 text-sm text-gray-600">
-      Résultats : {{ (current_page-1)*10 + 1 }} - {{ [current_page*10, total]|min }} sur {{ total }} <!-- Modifié ici -->
-    </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-center space-x-2 mt-6">
-      {% if current_page > 1 %}
-      <a href="{{ url_for('passages', page=current_page-1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}"
-             class="px-4 py-2 border rounded hover:bg-gray-100">Précédent</a>
-      {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+                {% if p >= current_page - 2 and p <= current_page + 2 %}
+                    <a href="{{ url_for('passages', page=p, **request_args) }}" 
+                       class="px-4 py-2 border rounded-lg {% if p == current_page %}bg-red-600 text-white{% else %}hover:bg-gray-100{% endif %}">
+                       {{ p }}
+                    </a>
+                {% endif %}
+            {% endfor %}
 
-      {% if total_pages > 1 %}
-          {% set window_size = 2 %}
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('passages', page=current_page+1, **request_args) }}" 
+                   class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+                   Suivant →
+                </a>
+            {% endif %}
+        </div>
 
-          {% if current_page > 3 %}
-              <a href="{{ url_for('passages', page=1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}" class="px-4 py-2 border rounded hover:bg-gray-100">1</a>
-              {% if current_page > 4 %}
-                  <span class="px-4 py-2">...</span>
-              {% endif %}
-          {% endif %}
-
-          {% for p in range(current_page - window_size, current_page + window_size + 1) %}
-              {% if p > 0 and p <= total_pages %}
-              <a href="{{ url_for('passages', page=p, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}"
-              class="px-4 py-2 border rounded {% if p == current_page %}bg-red-600 text-white{% else %}hover:bg-gray-100{% endif %}">
-              {{ p }}
-              </a>
-              {% endif %}
-          {% endfor %}
-                
-          {% if current_page < total_pages - 2 %}
-              {% if current_page < total_pages - 3 %}
-                  <span class="px-4 py-2">...</span>
-              {% endif %}
-              <a href="{{ url_for('passages', page=total_pages, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}" class="px-4 py-2 border rounded hover:bg-gray-100">{{ total_pages }}</a>
-          {% endif %}
-      {% endif %}
-                
-      {% if current_page < total_pages %}
-          <a href="{{ url_for('passages', page=current_page+1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}"
-             class="px-4 py-2 border rounded hover:bg-gray-100">Suivant</a>
-      {% endif %}
-    </div>
+        <!-- Carte des perturbations -->
+        <section class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Carte des perturbations</h2>
+            <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
+        </section>
     </main>
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-12">
+        <div class="container mx-auto">
+            <p>&copy; 2024 MEL Transport - Tous droits réservés</p>
+            <nav class="mt-2">
+                <a href="#" class="text-gray-400 hover:text-white mx-2">Mentions Légales</a>
+                <a href="#" class="text-gray-400 hover:text-white mx-2">Contact</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- Scripts Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Configuration de la carte
+        const map = L.map('map').setView([50.6292, 3.0573], 12)
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map)
+
+        // Icône personnalisée
+        const iconPerturbation = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/564/564619.png',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        })
+
+        // Ajout des marqueurs
+        {% for ligne_code, perts in perturbations_par_ligne.items() %}
+            {% if lignes_coordinates.get(ligne_code) %}
+                const marker{{ loop.index }} = L.marker(
+                    [{{ lignes_coordinates[ligne_code][0] }}, {{ lignes_coordinates[ligne_code][1] }}],
+                    { icon: iconPerturbation }
+                ).addTo(map)
+                
+                marker{{ loop.index }}.bindPopup(`
+                    <div class="leaflet-popup-content">
+                        <h3 class="font-bold text-lg mb-2">Ligne {{ ligne_code }}</h3>
+                        <p class="text-sm">${ {{ perts[0].message|tojson|safe }} }</p>
+                        {% if perts[0].heure_fin_prevue %}
+                            <p class="mt-2 text-xs text-gray-500">
+                                Fin prévue : {{ perts[0].heure_fin_prevue[:10] }}
+                            </p>
+                        {% endif %}
+                    </div>
+                `)
+            {% endif %}
+        {% endfor %}
+    </script>
 </body>
 </html>
