@@ -68,54 +68,54 @@
           </form>
       </div>
   
-             <!-- Affichage des passages -->
-             <h2 class="text-xl font-bold">Prochains Passages</h2>
-             <table class="min-w-full bg-white mb-6 border-collapse">
-               <thead>
-                   <tr>
-                       <th class="px-4 py-2 border">Nom Station</th>
-                       <th class="px-4 py-2 border">Ligne</th>
-                       <th class="px-4 py-2 border">Sens Ligne</th>
-                       <th class="px-4 py-2 border">Heure de passage</th>
-                       <th class="px-4 py-2 border">Perturbation</th>
-                       <th class="px-4 py-2 border">Description</th>
-                       <th class="px-4 py-2 border">Fin prévue de la perturbation</th>
-                   </tr>
-               </thead>
-               <tbody>
-                   {% if passages %}
-                       {% for passage in passages['records'] %}
-                           {% set ligne_code = passage['code_ligne'] %}
-                           <tr>
-                               <td class="px-4 py-2 border">{{ passage['nom_station'] }}</td>
-                               <td class="px-4 py-2 border">{{ ligne_code }}</td>
-                               <td class="px-4 py-2 border">{{ passage['sens_ligne'] }}</td>
-                               <td class="px-4 py-2 border">{{ passage['heure_estimee_depart'][11:16] }}</td>
-                               
-                               {% if perturbations_par_ligne.get(ligne_code) %}
-                                   {% set pert = perturbations_par_ligne[ligne_code][0] %}
-                                   <td class="px-4 py-2 border">{{ pert['type_perturbation'] }}</td>
-                                   <td class="px-4 py-2 border">{{ pert['message'] }}</td>
-                                   <td class="px-4 py-2 border">{{ pert['heure_fin_prevue'][:10] }}</td>
-                               {% else %}
-                                   <td class="px-4 py-2 border">-</td>
-                                   <td class="px-4 py-2 border">-</td>
-                                   <td class="px-4 py-2 border">-</td>
-                               {% endif %}
-                           </tr>
-                       {% endfor %}
-                   {% else %}
-                       <tr><td colspan="7" class="px-4 py-2 border">Aucune donnée disponible</td></tr>
-                   {% endif %}
-               </tbody>
-           </table>
+      <!-- Affichage des passages -->
+      <h2 class="text-xl font-bold">Prochains Passages</h2>
+      <table class="min-w-full bg-white mb-6 border-collapse">
+        <thead>
+            <tr>
+                <th class="px-4 py-2 border">Nom Station</th>
+                <th class="px-4 py-2 border">Ligne</th>
+                <th class="px-4 py-2 border">Sens Ligne</th>
+                <th class="px-4 py-2 border">Heure de passage</th>
+                <th class="px-4 py-2 border">Perturbation</th>
+                <th class="px-4 py-2 border">Description</th>
+                <th class="px-4 py-2 border">Fin prévue de la perturbation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if passages %}
+                {% for passage in passages['records'] %}
+                    {% set ligne_code = passage['code_ligne'] %}
+                    <tr>
+                        <td class="px-4 py-2 border">{{ passage['nom_station'] }}</td>
+                        <td class="px-4 py-2 border">{{ ligne_code }}</td>
+                        <td class="px-4 py-2 border">{{ passage['sens_ligne'] }}</td>
+                        <td class="px-4 py-2 border">{{ passage['heure_estimee_depart'][11:16] }}</td>
+                        
+                        {% if perturbations_par_ligne.get(ligne_code) %}
+                            {% set pert = perturbations_par_ligne[ligne_code][0] %}
+                            <td class="px-4 py-2 border">{{ pert['type_perturbation'] }}</td>
+                            <td class="px-4 py-2 border">{{ pert['message'] }}</td>
+                            <td class="px-4 py-2 border">{{ pert['heure_fin_prevue'][:10] }}</td>
+                        {% else %}
+                            <td class="px-4 py-2 border">-</td>
+                            <td class="px-4 py-2 border">-</td>
+                            <td class="px-4 py-2 border">-</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="7" class="px-4 py-2 border">Aucune donnée disponible</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
   
       <!-- Résultats -->
     <div class="mb-4 text-sm text-gray-600">
       Résultats : {{ (current_page-1)*10 + 1 }} - {{ [current_page*10, total]|min }} sur {{ total }} <!-- Modifié ici -->
     </div>
 
-     <!-- Pagination -->
+    <!-- Pagination -->
     <div class="flex justify-center space-x-2 mt-6">
       {% if current_page > 1 %}
       <a href="{{ url_for('passages', page=current_page-1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}"
@@ -126,7 +126,7 @@
           {% set window_size = 2 %}
 
           {% if current_page > 3 %}
-              <<a href="{{ url_for('passages', page=current_page+1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}" class="px-4 py-2 border rounded hover:bg-gray-100">1</a>
+              <a href="{{ url_for('passages', page=1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}" class="px-4 py-2 border rounded hover:bg-gray-100">1</a>
               {% if current_page > 4 %}
                   <span class="px-4 py-2">...</span>
               {% endif %}
@@ -145,15 +145,15 @@
               {% if current_page < total_pages - 3 %}
                   <span class="px-4 py-2">...</span>
               {% endif %}
-              <a href="{{ url_for('passages', page=total_pages, **request.args) }}" class="px-4 py-2 border rounded hover:bg-gray-100">{{ total_pages }}</a>
+              <a href="{{ url_for('passages', page=total_pages, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}" class="px-4 py-2 border rounded hover:bg-gray-100">{{ total_pages }}</a>
           {% endif %}
       {% endif %}
                 
       {% if current_page < total_pages %}
-          <a href="{{ url_for('passages', page=current_page+1, **request.args) }}"
+          <a href="{{ url_for('passages', page=current_page+1, ligne=request.args.get('ligne'), perturbation=request.args.get('perturbation'), heure=request.args.get('heure')) }}"
              class="px-4 py-2 border rounded hover:bg-gray-100">Suivant</a>
       {% endif %}
     </div>
-  </main>
+    </main>
 </body>
 </html>
