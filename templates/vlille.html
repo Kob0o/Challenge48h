@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <header class="bg-red-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">MEL Transport</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="/" class="hover:underline">Accueil</a></li>
+                    <li><a href="/bus" class="hover:underline">Bus & Tram</a></li>
+                    <li><a href="/velo" class="hover:underline text-gray-500">V'Lille</a></li>
+                    <li><a href="/" class="hover:underline">Mon Profil</a></li>
+                    <li><a href="/" class="hover:underline">Connexion</a></li>
+                    <li><a href="/" class="hover:underline">Inscription</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <title>Les stations V'Lille</title>
+</head>
+<body>
+    <script>
+        window.onload = function () {
+            initMap();
+          fetchData(); // Charger les données une fois la carte initialisée
+        };
+        </script>
+    <h1 class="text-3xl font-bold underline bg-gray-300  p-10 text-center mx-auto">
+        Les Stations V'Lille
+    </h1>
+    <table id="stations" class="min-w-full bg-white mb-6 border-collapse">
+        <thead>
+            <tr>
+                <th class="px-4 py-2 border">Nom Station</th>
+                <th class="px-4 py-2 border">Vélos disponibles</th>
+                <th class="px-4 py-2 border">Places libres</th>
+                <th class="px-4 py-2 border">Adresse</th>
+                <th class="px-4 py-2 border">Ville</th>
+                <th class="px-4 py-2 border">État</th>
+            </tr>
+        </thead>
+        <tbody id="stations-table-body">
+            <!-- Les données seront ajoutées ici dynamiquement -->
+        </tbody>
+    </table>
+    </table>
+    <script>
+        async function fetchData() {
+    try {
+        let response = await fetch("/data");
+        let data = await response.json();
+
+        let tableBody = document.getElementById("stations-table-body");
+        tableBody.innerHTML = ""; // Nettoyer le tableau avant d'ajouter de nouvelles données
+
+        data.features.forEach(station => {
+            let name = station.properties.nom;
+            let bikes = station.properties.nb_velos_dispo;
+            let stands = station.properties.nb_places_dispo;
+            let address = station.properties.adresse;
+            let country = station.properties.commune;
+            let state = station.properties.etat;
+
+            // Créer une nouvelle ligne de tableau
+            let row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td class="px-4 py-2 border">${name}</td>
+                <td class="px-4 py-2 border">${bikes}</td>
+                <td class="px-4 py-2 border">${stands}</td>
+                <td class="px-4 py-2 border">${address}</td>
+                <td class="px-4 py-2 border">${country}</td>
+                <td class="px-4 py-2 border">${state}</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+        updateMap(data.features);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
+    }
+}
+
+// Rafraîchir les données toutes les 30 secondes
+setInterval(fetchData, 30000);
+fetchData();
+
+
+
+// Rafraîchir les données toutes les 30 secondes
+setInterval(fetchData, 30000);
+fetchData();
+    </script>
+</body>
+</html>
