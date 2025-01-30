@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, session
+from flask import Flask, render_template, request, redirect, flash, url_for, session, jsonify
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -11,6 +11,16 @@ app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'chall48h'
 app.secret_key = os.urandom(24)
 mysql = MySQL(app)
+
+favorites = [
+    {"id": 1, "name": "Ligne 1", "status": "Normal"},
+    {"id": 2, "name": "Ligne 2", "status": "Retard"},
+]
+
+perturbations = [
+    {"id": 1, "line": "Ligne 2", "message": "Incident technique - retard de 15 min"},
+    {"id": 2, "line": "Ligne 3", "message": "Travaux en cours - ligne perturbée"},
+]
 
 
 @app.route('/')
@@ -76,6 +86,14 @@ def login_check():
 @app.route('/home')
 def home():
     return render_template("index.html")
+
+@app.route("/api/favorites")
+def get_favorites():
+    return jsonify(favorites)
+
+@app.route("/api/perturbations")
+def get_perturbations():
+    return jsonify(perturbations)
 
 if __name__ == '__main__':
     app.run(debug=True)
