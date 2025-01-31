@@ -132,3 +132,138 @@
         </script>
     </body>
 </html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <title>Les stations V'Lille</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
+<body>
+    <header class="bg-red-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">MEL Transport</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="/" class="hover:underline">Accueil</a></li>
+                    <li><a href="/bus" class="hover:underline">Bus & Tram</a></li>
+                    <li><a href="/velo" class="hover:underline text-gray-500">V'Lille</a></li>
+                    <li><a href="/" class="hover:underline">Mon Profil</a></li>
+                    <li><a href="/" class="hover:underline">Connexion</a></li>
+                    <li><a href="/" class="hover:underline">Inscription</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <h1 class="text-3xl font-bold underline bg-gray-300 p-10 text-center mx-auto">
+        Les Stations V'Lille
+    </h1>
+
+    <section class="container mx-auto px-4 my-6">
+        <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
+    </section>
+
+    <input 
+        type="text" 
+        id="search" 
+        placeholder="Rechercher une station V'Lille..." 
+        class="w-full p-4 mb-8 border border-gray-500 rounded focus:border-red-500 focus:outline-none focus:border-2 hover:border-red-300 container mx-auto max-w-4xl"
+        autocomplete="off"
+    >
+
+    <table id="stations" class="min-w-full bg-white mb-6 border-collapse container mx-auto max-w-4xl">
+        <thead>
+            <tr>
+                <th class="px-4 py-2 border">Nom Station</th>
+                <th class="px-4 py-2 border">Vélos disponibles</th>
+                <th class="px-4 py-2 border">Places libres</th>
+                <th class="px-4 py-2 border">Adresse</th>
+                <th class="px-4 py-2 border">Ville</th>
+                <th class="px-4 py-2 border">État</th>
+            </tr>
+        </thead>
+        <tbody id="stations-table-body">
+            <!-- Les données seront ajoutées ici dynamiquement -->
+        </tbody>
+    </table>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Configuration de la carte
+        let map;
+        let markers = [];
+
+        function initMap() {
+            map = L.map('map').setView([50.6292, 3.0573], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+        }
+
+        function updateMap(stations) {
+            // Supprimer les anciens marqueurs
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Ajouter les nouveaux marqueurs
+            stations.forEach(station => {
+                const coords = station.geometry.coordinates;
+                const marker = L.marker([coords[1], coords[0]])
+                    .addTo(map)
+                    .bindPopup(`
+                        <b>${station.properties.nom}</b><br>
+                        Vélos: ${station.properties.nb_velos_dispo}<br>
+                        Places: ${station.properties.nb_places_dispo}
+                    `);
+                markers.push(marker);
+            });
+        }
+
+        async function fetchData() {
+            try {
+                let response = await fetch("/data");
+                let data = await response.json();
+
+                // Mise à jour du tableau
+                let tableBody = document.getElementById("stations-table-body");
+                tableBody.innerHTML = "";
+
+                data.features.forEach(station => {
+                    let row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="px-4 py-2 border">${station.properties.nom}</td>
+                        <td class="px-4 py-2 border">${station.properties.nb_velos_dispo}</td>
+                        <td class="px-4 py-2 border">${station.properties.nb_places_dispo}</td>
+                        <td class="px-4 py-2 border">${station.properties.adresse}</td>
+                        <td class="px-4 py-2 border">${station.properties.commune}</td>
+                        <td class="px-4 py-2 border">${station.properties.etat}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Mise à jour de la carte
+                updateMap(data.features);
+            } catch (error) {
+                console.error("Erreur lors de la récupération des données:", error);
+            }
+        }
+
+        // Initialisation
+        initMap();
+        fetchData();
+        setInterval(fetchData, 30000);
+
+        // Recherche
+        document.getElementById('search').addEventListener('input', function() {
+            let searchValue = this.value.toLowerCase();
+            let items = document.querySelectorAll('#stations tr');
+            items.forEach(item => {
+                let text = item.textContent.toLowerCase();
+                item.classList.toggle('hidden', !text.includes(searchValue));
+            });
+        });
+    </script>
+</body>
+</html>
