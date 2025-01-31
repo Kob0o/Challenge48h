@@ -6,6 +6,8 @@ from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import re
+from flask_mail import Mail, Message
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.config['MYSQL_HOST'] = 'localhost'
@@ -14,6 +16,14 @@ app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'chall48h'
 app.secret_key = os.urandom(24)
 mysql = MySQL(app)
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'challenge4859170@gmail.com'  # Use your actual Gmail address
+app.config['MAIL_PASSWORD'] = 'osky clct qodx uokz'     # Use your generated App Password
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+mail = Mail(app)
 
 # URLs des sources API
 url_passages = 'https://data.lillemetropole.fr/data/ogcapi/collections/ilevia:prochains_passages/items?f=json&limit=-1'
@@ -45,6 +55,79 @@ def extract_line(line_ref):
 
 
 app.jinja_env.filters['extract_line'] = extract_line
+
+def check_perturbations():
+    with app.app_context():
+        try:
+            # Récupérer toutes les lignes favorites avec les utilisateurs
+            cursor = mysql.connection.cursor()
+            cursor.execute('''
+                SELECT u.email, f.bus_line_name, f.last_notified 
+                FROM user_favorite_bus_lines f
+                JOIN users u ON f.user_id = u.id 
+                WHERE u.notifications = TRUE
+            ''')
+            favorites = cursor.fetchall()
+            cursor.close()
+
+            # Récupérer les perturbations actuelles
+            perturbations_data = get_json_data(url_perturbations)
+            current_perturbations = {}
+            if perturbations_data and 'records' in perturbations_data:
+                for pert in perturbations_data['records']:
+                    ligne = extract_line(pert.get('cible', ''))
+                    if ligne:
+                        current_perturbations[ligne] = pert
+
+            # Vérifier chaque ligne favorite
+            for fav in favorites:
+                email, ligne, last_notified = fav
+                pert = current_perturbations.get(ligne)
+                
+                if pert:
+                    # Vérifier si la perturbation est nouvelle
+                    pert_date = datetime.fromisoformat(pert['date_modification'])
+                    if not last_notified or pert_date > last_notified:
+                        send_perturbation_alert(email, ligne, pert)
+                        
+                        # Mettre à jour last_notified
+                        cursor = mysql.connection.cursor()
+                        cursor.execute('''
+                            UPDATE user_favorite_bus_lines 
+                            SET last_notified = NOW() 
+                            WHERE bus_line_name = %s
+                        ''', (ligne,))
+                        mysql.connection.commit()
+                        cursor.close()
+
+        except Exception as e:
+            print(f"Erreur dans la vérification des perturbations: {e}")
+
+def send_perturbation_alert(email, ligne, perturbation):
+    try:
+        msg = Message(
+            subject=f"Perturbation sur la ligne {ligne}",
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[email]
+        )
+        msg.body = f'''
+        Alerte perturbation : {perturbation.get('type_perturbation')}
+        
+        Message : {perturbation.get('message')}
+        
+        Début : {perturbation.get('date_modification')}
+        Fin prévue : {perturbation.get('heure_fin_prevue')}
+        '''
+        mail.send(msg)
+        print(f"Email envoyé à {email}")
+    except Exception as e:
+        print(f"Erreur d'envoi d'email: {e}")
+
+# Planificateur pour vérifier toutes les 5 minutes
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=check_perturbations, trigger="interval", minutes=5)
+scheduler.start()
+
 
 favorites = [
     {"id": 1, "name": "Ligne 1", "status": "Normal"},
@@ -329,20 +412,45 @@ def passages():
 
 @app.route('/ajouter-aux-favoris', methods=["POST"])
 def ajouter_aux_favoris():
-
     data = request.form
     ligne = data['ligne']
     username = session["username"]
+    
     cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
-    user = cursor.fetchone()
-    if not user:
-        return "user pas trouvé"
+    try:
+        # Récupérer l'utilisateur
+        cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        if not user:
+            return "Utilisateur non trouvé"
 
-    user_id = user[0]
-    cursor.execute("INSERT INTO user_favorite_bus_lines (user_id, bus_line_name) VALUES (%s, %s)", (user_id, ligne))
-    mysql.connection.commit()
-    cursor.close()
+        user_id = user[0]
+        
+        # Vérifier si la ligne existe déjà
+        cursor.execute('''
+            SELECT * FROM user_favorite_bus_lines 
+            WHERE user_id = %s AND bus_line_name = %s
+        ''', (user_id, ligne))
+        if cursor.fetchone():
+            flash('Cette ligne est déjà dans vos favoris', 'warning')
+            return redirect("/bus")
+
+        # Ajouter la nouvelle ligne
+        cursor.execute('''
+            INSERT INTO user_favorite_bus_lines (user_id, bus_line_name, last_notified) 
+            VALUES (%s, %s, NULL)
+        ''', (user_id, ligne))
+        mysql.connection.commit()
+        
+        flash('Ligne ajoutée aux favoris avec notifications', 'success')
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"Erreur: {e}")
+        flash("Une erreur s'est produite", 'danger')
+    finally:
+        cursor.close()
+    
     return redirect("/bus")
 
 @app.route("/api/favorites")
