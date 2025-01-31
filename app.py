@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import requests
 from flask import Flask, render_template, request, redirect, flash, url_for, session, jsonify
 from flask_mysqldb import MySQL
+import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import re
@@ -91,6 +92,12 @@ def velo():
 
     # Pagination
     total = len(filtered_stations)
+
+    # Calcul de la pagination
+    total = len(filtered_stations)
+    total_pages = (total + per_page - 1) // per_page
+    start = (page - 1) * per_page
+    end = start + per_page
     
     return render_template('vlille.html',
         stations=filtered_stations[start:end],
