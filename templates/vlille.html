@@ -17,7 +17,6 @@
                     <li><a href="/" class="hover:underline">Accueil</a></li>
                     <li><a href="/bus" class="hover:underline">Bus</a></li>
                     <li><a href="/velo" class="hover:underline font-semibold">V'Lille</a></li>
-                    <li><a href="/" class="hover:underline">Mon Profil</a></li>
                 </ul>
             </nav>
         </div>
@@ -83,7 +82,7 @@
         <!-- Select and Add to Favorites -->
         <form action="/ajouter-velos-aux-favoris" method="POST">
             <div class="bg-white p-4 rounded-lg shadow-md mb-6 flex gap-4">
-                <select name="stationSelect" id="stationSelect" class="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-red-500">
+                <select name="station" id="stationSelect" class="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-red-500">
                     <option value="" disabled selected>Sélectionnez une station</option>
                     {% for station in all_stations %}
                         <option value="{{ station.properties.nom }}">{{ station.properties.nom }}</option>
