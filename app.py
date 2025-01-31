@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import requests
 from flask import Flask, render_template, request, redirect, flash, url_for, session, jsonify
 from flask_mysqldb import MySQL
-import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import re
