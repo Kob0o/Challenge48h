@@ -68,6 +68,8 @@ def get_json_data(url):
 
 @app.route('/velo')
 def velo():
+
+
     page = request.args.get('page', 1, type=int)
     per_page = 10
     search_query = request.args.get('search', '').lower()
@@ -91,6 +93,11 @@ def velo():
 
     # Pagination
     total = len(filtered_stations)
+
+    total = len(filtered_stations)
+    total_pages = (total + per_page - 1) // per_page
+    start = (page - 1) * per_page
+    end = start + per_page
     
     return render_template('vlille.html',
         stations=filtered_stations[start:end],
@@ -195,20 +202,27 @@ def home():
     user_id = user[0]
 
     cursor = mysql.connection.cursor()
+    velo = mysql.connection.cursor()
     cursor.execute(
         "SELECT bus_line_name FROM user_favorite_bus_lines WHERE user_id = %s",
         (user_id,)
     )
+    velo.execute(
+        "SELECT station_name FROM user_favorite_velos_stations WHERE user_id = %s",
+        (user_id,)
+    )
     favorite_bus_lines = cursor.fetchall()
+    favorite_stations = velo.fetchall()
     cursor.close()
-
+    velo.close()
     print(f"Favorite Bus Lines: {favorite_bus_lines}")
-
+    print(f"favorite staions: {favorite_stations}")
     favorites = [line[0] for line in favorite_bus_lines]
+    velos = [station[0] for station in favorite_stations]
 
     print(f"Favorites List: {favorites}")
 
-    return render_template("index.html", favorites=favorites)
+    return render_template("index.html", favorites=favorites, velos=velos)
 
 
 @app.route('/bus')
@@ -338,6 +352,28 @@ def ajouter_aux_favoris():
     mysql.connection.commit()
     cursor.close()
     return redirect("/bus")
+
+
+
+@app.route('/ajouter-velos-aux-favoris', methods=["POST"])
+def ajouter_velos_aux_favoris():
+    print(request.form)
+    data = request.form
+    station = data['stationSelect']
+    print(station)
+    username = session['username']
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
+    if not user:
+        print("pas de user")
+        return "user pas trouvé"
+
+    user_id = user[0]
+    cursor.execute("INSERT INTO user_favorite_velos_stations (user_id, station_name) VALUES (%s, %s)", (user_id, station))
+    mysql.connection.commit()
+    cursor.close()
+    return redirect('/velo')
 
 @app.route("/api/favorites")
 def get_favorites():

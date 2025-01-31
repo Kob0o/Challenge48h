@@ -80,10 +80,22 @@
             </table>
         </div>
 
+        <!-- Select and Add to Favorites -->
+        <form action="/ajouter-velos-aux-favoris" method="POST">
+            <div class="bg-white p-4 rounded-lg shadow-md mb-6 flex gap-4">
+                <select name="stationSelect" id="stationSelect" class="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-red-500">
+                    <option value="" disabled selected>Sélectionnez une station</option>
+                    {% for station in all_stations %}
+                        <option value="{{ station.properties.nom }}">{{ station.properties.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="submit" value="Ajouter aux favoris">
+        </form>
         <!-- Pagination -->
         <div class="flex justify-center gap-2 mt-6">
             {% if current_page > 1 %}
-                <a href="{{ url_for('velo', page=current_page-1, **request_args) }}" 
+                <a href="{{ url_for('velo', page=current_page-1, **request_args) }}"
                    class="px-4 py-2 border rounded-lg hover:bg-gray-100">
                    ← Précédent
                 </a>
@@ -91,7 +103,7 @@
 
             {% for p in range(1, total_pages + 1) %}
                 {% if p >= current_page - 2 and p <= current_page + 2 %}
-                    <a href="{{ url_for('velo', page=p, **request_args) }}" 
+                    <a href="{{ url_for('velo', page=p, **request_args) }}"
                        class="px-4 py-2 border rounded-lg {% if p == current_page %}bg-red-600 text-white{% else %}hover:bg-gray-100{% endif %}">
                        {{ p }}
                     </a>
@@ -99,7 +111,7 @@
             {% endfor %}
 
             {% if current_page < total_pages %}
-                <a href="{{ url_for('velo', page=current_page+1, **request_args) }}" 
+                <a href="{{ url_for('velo', page=current_page+1, **request_args) }}"
                    class="px-4 py-2 border rounded-lg hover:bg-gray-100">
                    Suivant →
                 </a>
@@ -128,7 +140,7 @@
     <script>
         // Configuration de la carte
         const map = L.map('map').setView([50.6292, 3.0573], 12)
-        
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map)
@@ -145,6 +157,8 @@
                 Places: {{ station.properties.nb_places_dispo }}
             `)
         {% endfor %}
+
+
     </script>
 </body>
 </html>
