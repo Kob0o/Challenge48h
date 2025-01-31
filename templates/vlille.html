@@ -1,128 +1,134 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <header class="bg-red-600 text-white p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">MEL Transport</h1>
-            <nav>
-                <ul class="flex space-x-4">
-                    <li><a href="/" class="hover:underline">Accueil</a></li>
-                    <li><a href="/bus" class="hover:underline">Bus & Tram</a></li>
-                    <li><a href="/velo" class="hover:underline text-gray-500">V'Lille</a></li>
-                    <li><a href="/" class="hover:underline">Mon Profil</a></li>
-                    <li><a href="/" class="hover:underline">Connexion</a></li>
-                    <li><a href="/" class="hover:underline">Inscription</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <title>Les stations V'Lille</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-</head>
-<body>
-    <h1 class="text-3xl font-bold underline bg-gray-300  p-10 text-center mx-auto">
-        Les Stations V'Lille
-    </h1>
-    <section>
-        <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
-    </section>
-    <input 
-    type="text" 
-    id="search" 
-    placeholder="Rechercher une station V'Lille..." 
-    class="w-full p-4 mb-8 border border-gray-500 rounded focus:border-red-500 focus:outline-none focus:border-2 hover:border-red-300"
-    autocomplete="off"
->
-    <table id="stations" class="min-w-full bg-white mb-6 border-collapse">
-        <thead>
-            <tr>
-                <th class="px-4 py-2 border">Nom Station</th>
-                <th class="px-4 py-2 border">Vélos disponibles</th>
-                <th class="px-4 py-2 border">Places libres</th>
-                <th class="px-4 py-2 border">Adresse</th>
-                <th class="px-4 py-2 border">Ville</th>
-                <th class="px-4 py-2 border">État</th>
-            </tr>
-        </thead>
-        <tbody id="stations-table-body">
-            <!-- Les données seront ajoutées ici dynamiquement -->
-        </tbody>
-    </table>
-    </table>
-    <script>
-        async function fetchData() {
-    try {
-        let response = await fetch("/data");
-        let data = await response.json();
-
-        let tableBody = document.getElementById("stations-table-body");
-        tableBody.innerHTML = ""; // Nettoyer le tableau avant d'ajouter de nouvelles données
-
-        data.features.forEach(station => {
-            let name = station.properties.nom;
-            let bikes = station.properties.nb_velos_dispo;
-            let stands = station.properties.nb_places_dispo;
-            let address = station.properties.adresse;
-            let country = station.properties.commune;
-            let state = station.properties.etat;
-
-            // Créer une nouvelle ligne de tableau
-            let row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td class="px-4 py-2 border">${name}</td>
-                <td class="px-4 py-2 border">${bikes}</td>
-                <td class="px-4 py-2 border">${stands}</td>
-                <td class="px-4 py-2 border">${address}</td>
-                <td class="px-4 py-2 border">${country}</td>
-                <td class="px-4 py-2 border">${state}</td>
-            `;
-
-            tableBody.appendChild(row);
-        });
-
-        updateMap(data.features);
-    } catch (error) {
-        console.error("Erreur lors de la récupération des données:", error);
-    }
-}
-
-// Rafraîchir les données toutes les 30 secondes
-setInterval(fetchData, 30000);
-fetchData();
-
-
-
-// Rafraîchir les données toutes les 30 secondes
-setInterval(fetchData, 30000);
-fetchData();
-    </script>
-    <script>
-        document.getElementById('search').addEventListener('input', function() {
-            let searchValue = this.value.toLowerCase();
-            let items = document.querySelectorAll('#stations tr');
-
-            items.forEach(item => {
-                let text = item.textContent.toLowerCase();
-                if (text.includes(searchValue)) {
-                    item.classList.remove('hidden');
-                } else {
-                    item.classList.add('hidden');
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+        <title>Les stations V'Lille</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    </head>
+    <body>
+        <header class="bg-red-600 text-white p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">MEL Transport</h1>
+                <nav>
+                    <ul class="flex space-x-4">
+                        <li><a href="/" class="hover:underline">Accueil</a></li>
+                        <li><a href="/bus" class="hover:underline">Bus & Tram</a></li>
+                        <li><a href="/velo" class="hover:underline text-gray-500">V'Lille</a></li>
+                        <li><a href="/" class="hover:underline">Mon Profil</a></li>
+                        <li><a href="/" class="hover:underline">Connexion</a></li>
+                        <li><a href="/" class="hover:underline">Inscription</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+        
+        <main class="container mx-auto p-4">
+            <h1 class="text-3xl font-bold underline bg-gray-300 p-10 text-center mx-auto">
+                Les Stations V'Lille
+            </h1>
+            <section>
+                <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
+            </section>
+            
+            <input 
+                type="text" 
+                id="search" 
+                placeholder="Rechercher une station V'Lille..." 
+                class="w-full p-4 mb-8 border border-gray-500 rounded focus:border-red-500 focus:outline-none focus:border-2 hover:border-red-300"
+                autocomplete="off"
+            >
+            
+            <table id="stations" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom Station</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vélos disponibles</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Places libres</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Adresse</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ville</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">État</th>
+                    </tr>
+                </thead>
+                <tbody id="stations-table-body" class="hover:bg-gray-50 transition-colors">
+                    <!-- Les données seront ajoutées ici dynamiquement -->
+                </tbody>
+            </table>
+        </main>
+        
+        <footer class="bg-gray-800 text-white text-center p-4 mt-12">
+            <div class="container mx-auto">
+                <p>&copy; 2024 MEL Transport - Tous droits réservés</p>
+                <nav class="mt-2">
+                    <a href="#" class="text-gray-400 hover:text-white mx-2">Mentions Légales</a>
+                    <a href="#" class="text-gray-400 hover:text-white mx-2">Contact</a>
+                </nav>
+            </div>
+        </footer>
+        
+        <script>
+            async function fetchData() {
+                try {
+                    let response = await fetch("/data");
+                    let data = await response.json();
+                    
+                    let tableBody = document.getElementById("stations-table-body");
+                    tableBody.innerHTML = ""; // Nettoyer le tableau avant d'ajouter de nouvelles données
+                    
+                    data.features.forEach(station => {
+                        let name = station.properties.nom;
+                        let bikes = station.properties.nb_velos_dispo;
+                        let stands = station.properties.nb_places_dispo;
+                        let address = station.properties.adresse;
+                        let country = station.properties.commune;
+                        let state = station.properties.etat;
+                        
+                        // Créer une nouvelle ligne de tableau
+                        let row = document.createElement("tr");
+                        
+                        row.innerHTML = `
+                            <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">${name}</td>
+                            <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">${bikes}</td>
+                            <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">${stands}</td>
+                            <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">${address}</td>
+                            <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">${country}</td>
+                            <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">${state}</td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error("Erreur lors de la récupération des données:", error);
                 }
+            }
+            
+            setInterval(fetchData, 30000);
+            fetchData();
+        </script>
+        
+        <script>
+            document.getElementById('search').addEventListener('input', function() {
+                let searchValue = this.value.toLowerCase();
+                let items = document.querySelectorAll('#stations tr');
+                
+                items.forEach(item => {
+                    let text = item.textContent.toLowerCase();
+                    if (text.includes(searchValue)) {
+                        item.classList.remove('hidden');
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
             });
-        });
-    </script>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script>
-        // Configuration de la carte
-        const map = L.map('map').setView([50.6292, 3.0573], 12)
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map)
-    </script>
-</body>
+        </script>
+        
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <script>
+            const map = L.map('map').setView([50.6292, 3.0573], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+        </script>
+    </body>
 </html>
