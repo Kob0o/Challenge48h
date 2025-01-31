@@ -20,17 +20,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <title>Les stations V'Lille</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
 <body>
-    <script>
-        window.onload = function () {
-            initMap();
-          fetchData(); // Charger les données une fois la carte initialisée
-        };
-        </script>
     <h1 class="text-3xl font-bold underline bg-gray-300  p-10 text-center mx-auto">
         Les Stations V'Lille
     </h1>
+    <section>
+        <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
+    </section>
+    <input 
+    type="text" 
+    id="search" 
+    placeholder="Rechercher une station V'Lille..." 
+    class="w-full p-4 mb-8 border border-gray-500 rounded focus:border-red-500 focus:outline-none focus:border-2 hover:border-red-300"
+    autocomplete="off"
+>
     <table id="stations" class="min-w-full bg-white mb-6 border-collapse">
         <thead>
             <tr>
@@ -94,6 +99,30 @@ fetchData();
 // Rafraîchir les données toutes les 30 secondes
 setInterval(fetchData, 30000);
 fetchData();
+    </script>
+    <script>
+        document.getElementById('search').addEventListener('input', function() {
+            let searchValue = this.value.toLowerCase();
+            let items = document.querySelectorAll('#stations tr');
+
+            items.forEach(item => {
+                let text = item.textContent.toLowerCase();
+                if (text.includes(searchValue)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Configuration de la carte
+        const map = L.map('map').setView([50.6292, 3.0573], 12)
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map)
     </script>
 </body>
 </html>

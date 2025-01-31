@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 import requests
-
+import os
+print(os.getcwd())
 app = Flask(__name__)
 
 DATA_URL = "https://data.lillemetropole.fr/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=dsp_ilevia%3Avlille_temps_reel&OUTPUTFORMAT=application%2Fjson"
