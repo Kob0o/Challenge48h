@@ -3,135 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEL Transport - V'Lille</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <title>Les stations V'Lille</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
-<body>
-    <header class="bg-red-600 text-white p-4">
+<body class="bg-gray-50">
+    <!-- En-tête -->
+    <header class="bg-red-600 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">MEL Transport</h1>
             <nav>
                 <ul class="flex space-x-4">
                     <li><a href="/" class="hover:underline">Accueil</a></li>
-                    <li><a href="/bus" class="hover:underline">Bus & Tram</a></li>
-                    <li><a href="/velo" class="hover:underline text-gray-500">V'Lille</a></li>
+                    <li><a href="/bus" class="hover:underline">Bus</a></li>
+                    <li><a href="/velo" class="hover:underline font-semibold">V'Lille</a></li>
                     <li><a href="/" class="hover:underline">Mon Profil</a></li>
-                    <li><a href="/" class="hover:underline">Connexion</a></li>
-                    <li><a href="/" class="hover:underline">Inscription</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <h1 class="text-3xl font-bold underline bg-gray-300 p-10 text-center mx-auto">
-        Les Stations V'Lille
-    </h1>
+    <main class="container mx-auto p-4">
+        <!-- Titre principal -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Stations V'Lille</h1>
 
-    <section class="container mx-auto px-4 my-6">
-        <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
-    </section>
+        <!-- Barre de recherche -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+            <form method="GET" class="flex gap-4">
+                <input 
+                    type="text" 
+                    name="search" 
+                    placeholder="Rechercher une station..." 
+                    class="flex-grow p-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    value="{{ request_args.get('search', '') }}"
+                >
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    Rechercher
+                </button>
+            </form>
+        </div>
 
-    <input 
-        type="text" 
-        id="search" 
-        placeholder="Rechercher une station V'Lille..." 
-        class="w-full p-4 mb-8 border border-gray-500 rounded focus:border-red-500 focus:outline-none focus:border-2 hover:border-red-300 container mx-auto max-w-4xl"
-        autocomplete="off"
-    >
+        <!-- Résultats -->
+        <div class="mb-4 text-sm text-gray-600">
+            Affichage des résultats {{ (current_page-1)*per_page + 1 }} à {{ [current_page*per_page, total]|min }} sur {{ total }}
+        </div>
 
-    <table id="stations" class="min-w-full bg-white mb-6 border-collapse container mx-auto max-w-4xl">
-        <thead>
-            <tr>
-                <th class="px-4 py-2 border">Nom Station</th>
-                <th class="px-4 py-2 border">Vélos disponibles</th>
-                <th class="px-4 py-2 border">Places libres</th>
-                <th class="px-4 py-2 border">Adresse</th>
-                <th class="px-4 py-2 border">Ville</th>
-                <th class="px-4 py-2 border">État</th>
-            </tr>
-        </thead>
-        <tbody id="stations-table-body">
-            <!-- Les données seront ajoutées ici dynamiquement -->
-        </tbody>
-    </table>
+        <!-- Tableau des stations -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom Station</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vélos</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Places dispo</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Adresse</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ville</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">État</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for station in stations %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 text-sm text-gray-900">{{ station.properties.nom }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ station.properties.nb_velos_dispo }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ station.properties.nb_places_dispo }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ station.properties.adresse }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ station.properties.commune }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ station.properties.etat }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-500">Aucune station trouvée</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
+        <!-- Pagination -->
+        <div class="flex justify-center gap-2 mt-6">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('velo', page=current_page-1, **request_args) }}" 
+                   class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+                   ← Précédent
+                </a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                {% if p >= current_page - 2 and p <= current_page + 2 %}
+                    <a href="{{ url_for('velo', page=p, **request_args) }}" 
+                       class="px-4 py-2 border rounded-lg {% if p == current_page %}bg-red-600 text-white{% else %}hover:bg-gray-100{% endif %}">
+                       {{ p }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('velo', page=current_page+1, **request_args) }}" 
+                   class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+                   Suivant →
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Carte -->
+        <section class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Carte des stations</h2>
+            <div id="map" class="h-96 rounded-lg shadow-lg border border-gray-200"></div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-12">
+        <div class="container mx-auto">
+            <p>&copy; 2024 MEL Transport - Tous droits réservés</p>
+            <nav class="mt-2">
+                <a href="#" class="text-gray-400 hover:text-white mx-2">Mentions Légales</a>
+                <a href="#" class="text-gray-400 hover:text-white mx-2">Contact</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- Scripts Leaflet -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
         // Configuration de la carte
-        let map;
-        let markers = [];
+        const map = L.map('map').setView([50.6292, 3.0573], 12)
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map)
 
-        function initMap() {
-            map = L.map('map').setView([50.6292, 3.0573], 12);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
-        }
-
-        function updateMap(stations) {
-            // Supprimer les anciens marqueurs
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
-
-            // Ajouter les nouveaux marqueurs
-            stations.forEach(station => {
-                const coords = station.geometry.coordinates;
-                const marker = L.marker([coords[1], coords[0]])
-                    .addTo(map)
-                    .bindPopup(`
-                        <b>${station.properties.nom}</b><br>
-                        Vélos: ${station.properties.nb_velos_dispo}<br>
-                        Places: ${station.properties.nb_places_dispo}
-                    `);
-                markers.push(marker);
-            });
-        }
-
-        async function fetchData() {
-            try {
-                let response = await fetch("/data");
-                let data = await response.json();
-
-                // Mise à jour du tableau
-                let tableBody = document.getElementById("stations-table-body");
-                tableBody.innerHTML = "";
-
-                data.features.forEach(station => {
-                    let row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td class="px-4 py-2 border">${station.properties.nom}</td>
-                        <td class="px-4 py-2 border">${station.properties.nb_velos_dispo}</td>
-                        <td class="px-4 py-2 border">${station.properties.nb_places_dispo}</td>
-                        <td class="px-4 py-2 border">${station.properties.adresse}</td>
-                        <td class="px-4 py-2 border">${station.properties.commune}</td>
-                        <td class="px-4 py-2 border">${station.properties.etat}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-
-                // Mise à jour de la carte
-                updateMap(data.features);
-            } catch (error) {
-                console.error("Erreur lors de la récupération des données:", error);
-            }
-        }
-
-        // Initialisation
-        initMap();
-        fetchData();
-        setInterval(fetchData, 30000);
-
-        // Recherche
-        document.getElementById('search').addEventListener('input', function() {
-            let searchValue = this.value.toLowerCase();
-            let items = document.querySelectorAll('#stations tr');
-            items.forEach(item => {
-                let text = item.textContent.toLowerCase();
-                item.classList.toggle('hidden', !text.includes(searchValue));
-            });
-        });
+        // Ajout des marqueurs
+        {% for station in all_stations %}
+            const marker{{ loop.index }} = L.marker([
+                {{ station.geometry.coordinates[1] }},
+                {{ station.geometry.coordinates[0] }}
+            ]).addTo(map)
+            .bindPopup(`
+                <b>{{ station.properties.nom }}</b><br>
+                Vélos: {{ station.properties.nb_velos_dispo }}<br>
+                Places: {{ station.properties.nb_places_dispo }}
+            `)
+        {% endfor %}
     </script>
 </body>
 </html>
